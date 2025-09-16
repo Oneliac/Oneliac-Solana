@@ -25,6 +25,24 @@ pub struct HealthcareRegistry {
     pub ipfs_pin_count: u64,
 }
 
+#[account]
+pub struct VerificationRecord {
+    pub patient_pubkey: Pubkey,
+    pub proof_hash: [u8; 32],
+    pub ipfs_hash: String,
+    pub timestamp: i64,
+    pub is_valid: bool,
+    pub verification_type: VerificationType,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
+pub enum VerificationType {
+    Eligibility,
+    Prescription,
+    Diagnosis,
+    AccessControl,
+}
+
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(init, payer = authority, space = 8 + 128)]
