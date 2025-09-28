@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::keccak;
 
 declare_id!("HEALth11111111111111111111111111111111111");
 
@@ -13,6 +14,33 @@ pub mod zk_healthcare {
         registry.total_verifications = 0;
         registry.ipfs_pin_count = 0;
         msg!("Healthcare ZK Registry initialized");
+        Ok(())
+    }
+
+    pub fn verify_eligibility(
+        ctx: Context<VerifyEligibility>,
+        proof: Vec<u8>,
+        public_inputs: Vec<u8>,
+        ipfs_hash: String,
+    ) -> Result<()> {
+        let registry = &mut ctx.accounts.registry;
+        let verification = &mut ctx.accounts.verification;
+
+        require!(
+            proof.len() == 256,
+            HealthcareError::InvalidProofLength
+        );
+
+        // TODO: implement Groth16 verification
+        verification.patient_pubkey = ctx.accounts.patient.key();
+        verification.proof_hash = keccak::hash(&proof).to_bytes();
+        verification.ipfs_hash = ipfs_hash;
+        verification.timestamp = Clock::get()?.unix_timestamp;
+        verification.is_valid = true;
+        verification.verification_type = VerificationType::Eligibility;
+
+        registry.total_verifications += 1;
+
         Ok(())
     }
 }
@@ -50,4 +78,21 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct VerifyEligibility<'info> {
+    #[account(mut)]
+    pub registry: Account<'info, HealthcareRegistry>,
+    #[account(init, payer = patient, space = 8 + 256)]
+    pub verification: Account<'info, VerificationRecord>,
+    #[account(mut)]
+    pub patient: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[error_code]
+pub enum HealthcareError {
+    #[msg("Invalid proof length")]
+    InvalidProofLength,
 }
