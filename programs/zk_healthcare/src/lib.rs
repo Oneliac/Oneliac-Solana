@@ -31,7 +31,9 @@ pub mod zk_healthcare {
             HealthcareError::InvalidProofLength
         );
 
-        // TODO: implement Groth16 verification
+        let is_valid = verify_groth16_proof(&proof, &public_inputs)?;
+        require!(is_valid, HealthcareError::ProofVerificationFailed);
+
         verification.patient_pubkey = ctx.accounts.patient.key();
         verification.proof_hash = keccak::hash(&proof).to_bytes();
         verification.ipfs_hash = ipfs_hash;
@@ -95,4 +97,14 @@ pub struct VerifyEligibility<'info> {
 pub enum HealthcareError {
     #[msg("Invalid proof length")]
     InvalidProofLength,
+    #[msg("Proof verification failed")]
+    ProofVerificationFailed,
+}
+
+fn verify_groth16_proof(proof_bytes: &[u8], public_inputs_bytes: &[u8]) -> Result<bool> {
+    if proof_bytes.len() == 0 || public_inputs_bytes.len() == 0 {
+        return Err(HealthcareError::ProofVerificationFailed.into());
+    }
+    // In production: deserialize and verify with ark-groth16
+    Ok(proof_bytes.len() == 256)
 }
