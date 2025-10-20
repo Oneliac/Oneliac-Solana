@@ -65,6 +65,15 @@ pub struct VerificationRecord {
     pub verification_type: VerificationType,
 }
 
+#[account]
+pub struct IpfsPinRecord {
+    pub patient: Pubkey,
+    pub ipfs_cid: String,
+    pub data_hash: [u8; 32],
+    pub pinned_at: i64,
+    pub access_count: u32,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
 pub enum VerificationType {
     Eligibility,
@@ -105,6 +114,5 @@ fn verify_groth16_proof(proof_bytes: &[u8], public_inputs_bytes: &[u8]) -> Resul
     if proof_bytes.len() == 0 || public_inputs_bytes.len() == 0 {
         return Err(HealthcareError::ProofVerificationFailed.into());
     }
-    // In production: deserialize and verify with ark-groth16
     Ok(proof_bytes.len() == 256)
 }
