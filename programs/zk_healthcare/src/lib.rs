@@ -45,6 +45,25 @@ pub mod zk_healthcare {
 
         Ok(())
     }
+
+    pub fn pin_medical_data(
+        ctx: Context<PinMedicalData>,
+        ipfs_cid: String,
+        data_hash: [u8; 32],
+    ) -> Result<()> {
+        let pin_record = &mut ctx.accounts.pin_record;
+        let registry = &mut ctx.accounts.registry;
+
+        pin_record.patient = ctx.accounts.patient.key();
+        pin_record.ipfs_cid = ipfs_cid;
+        pin_record.data_hash = data_hash;
+        pin_record.pinned_at = Clock::get()?.unix_timestamp;
+        pin_record.access_count = 0;
+
+        registry.ipfs_pin_count += 1;
+
+        Ok(())
+    }
 }
 
 #[account]
@@ -97,6 +116,17 @@ pub struct VerifyEligibility<'info> {
     pub registry: Account<'info, HealthcareRegistry>,
     #[account(init, payer = patient, space = 8 + 256)]
     pub verification: Account<'info, VerificationRecord>,
+    #[account(mut)]
+    pub patient: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct PinMedicalData<'info> {
+    #[account(mut)]
+    pub registry: Account<'info, HealthcareRegistry>,
+    #[account(init, payer = patient, space = 8 + 256)]
+    pub pin_record: Account<'info, IpfsPinRecord>,
     #[account(mut)]
     pub patient: Signer<'info>,
     pub system_program: Program<'info, System>,
