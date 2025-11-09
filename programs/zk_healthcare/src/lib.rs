@@ -55,12 +55,18 @@ pub mod zk_healthcare {
         let registry = &mut ctx.accounts.registry;
 
         pin_record.patient = ctx.accounts.patient.key();
-        pin_record.ipfs_cid = ipfs_cid;
+        pin_record.ipfs_cid = ipfs_cid.clone();
         pin_record.data_hash = data_hash;
         pin_record.pinned_at = Clock::get()?.unix_timestamp;
         pin_record.access_count = 0;
 
         registry.ipfs_pin_count += 1;
+
+        emit!(DataPinned {
+            patient: ctx.accounts.patient.key(),
+            ipfs_cid,
+            data_hash,
+        });
 
         Ok(())
     }
@@ -130,6 +136,13 @@ pub struct PinMedicalData<'info> {
     #[account(mut)]
     pub patient: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[event]
+pub struct DataPinned {
+    pub patient: Pubkey,
+    pub ipfs_cid: String,
+    pub data_hash: [u8; 32],
 }
 
 #[error_code]
