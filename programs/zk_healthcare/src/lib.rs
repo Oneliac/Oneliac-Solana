@@ -99,6 +99,13 @@ pub struct IpfsPinRecord {
     pub access_count: u32,
 }
 
+#[account]
+pub struct FederatedLearningState {
+    pub round_number: u64,
+    pub last_update: i64,
+    pub participant_count: u32,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
 pub enum VerificationType {
     Eligibility,
